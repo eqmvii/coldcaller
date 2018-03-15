@@ -5,14 +5,33 @@
 <head>
 
   <meta charset="UTF-8">
-  <title>Sign-Up Today!</title>
+  <title>Cold Caller</title>
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
     crossorigin="anonymous">
 
-  <!-- LINK TO FIREBASE GOES HERE -->
+  <!-- LINK TO FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/4.11.0/firebase.js"></script>
+
+  <style>
+    .student-container {
+      display: inline-block;
+      padding: 4px;
+      margin: 4px;
+      border: 2px solid grey;
+      border-radius: 4px;
+      width: 29%;
+      height: 60px;
+      line-height: 48px;
+      font-size: 14px;
+    }
+
+    button {
+      margin: 12px;
+    }
+  </style>
+
 </head>
 
 <body>
@@ -20,53 +39,40 @@
   <div class="container">
 
     <br>
-
-    <!-- Jumbotron -->
-    <div class="jumbotron">
-      <h1 class="text-center">Test</h1>
-    </div>
-
-    <div class="row">
-
-      <!-- Sign-Up Panel-->
-      <div class="col-lg-6">
+    <div class="row"> <!-- might be misusing rows and columns, should think about using 3 rows here -->
+      <div class="col-lg-6 col-lg-offset-3">
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">New Member Sign-Up</h3>
+            <h3 class="panel-title text-center">Controls</h3>
           </div>
-          <div class="panel-body">
-
-            <!-- Sign-up Form (note the various input "types")-->
-
-
-            <button class="btn btn-default" id="add-user" type="submit">Submit</button>
-
-            <button class="btn btn-default" id="reset" type="submit">Reset Students</button>
-
+          <div class="panel-body text-center">
+            <button class="btn btn-primary" id="pick-student" type="submit">Pick a Student</button>
+            <button class="btn btn-danger" id="reset" type="submit">Reset Students</button>
           </div>
 
         </div>
 
-      </div>
-
-      <!-- Most Recent Member Panel -->
-      <div class="col-lg-6">
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">Most Recent Member</h3>
+            <h3 class="panel-title text-center">Chosen Student</h3>
           </div>
-          <div class="panel-body" id="recent-member">
-            <h1 id="chosen-student">empty</h1>
-            <h2>Students left:
-              <span id="students-left">empty</span>
-            </h2>
-            <!-- <h2 id="name-display"></h2>
-            <h4 id="email-display"></h4>
-            <h4 id="age-display"></h4>
-            <p id="comment-display"></p> -->
+          <div class="panel-body text-center" id="chosen-panel">
+            <h4>Chosen:</h4>
+            <span id="chosen-student" class="student-container">___________</span>
+            <h4>Remaining:</h4>
+            <span id="students-left">##</span>
           </div>
         </div>
-      </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title text-center">Remaining Students</h3>
+          </div>
+          <div class="panel-body text-center" id="remaining-members"></div>
+        </div>
+
+
+      </div><!-- end column -->
 
     </div>
 
@@ -75,13 +81,27 @@
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery.js"></script>
 
-  <!-- Script -->
+  <!-- Main Logic & Firebase API calls -->
   <script>
-    // START CODING BELOW!!
-    // var students = ["Kaitlyn	Roecker", "Paula	MacTavish", "Joe	McCreesh", "Anna	Jolly", "Dennis	Bereznyak", "Adeline	Johnson", "Dennis	Ruto", "Marc	Lewin", "Dirk	Wiggins", "Matthew	Jefferis", "Matthew	McCarthy", "Randall	Reitz", "Anthony	Elliott", "Charles	Goodwin", "SARA	BROAD", "Isaac	Lubanko", "Khalil	Owens", "Clay	Fairbanks", "Matthew	Wright", "Kushagra	Bhavsar", "Julian	Skodzinski", "Alexa	Stefanou", "Drita	Dhami", "George	Xia", "Jonathan	Dowd", "Katherine	Wang", "Bernard	Augustin", "Karina	Khachatryan", "Noah	Grubb"];
+    // This array shuffle function was taken from: https://www.kirupa.com/html5/shuffling_array_js.htm
+    Array.prototype.shuffle = function () {
+      var input = this;
+
+      for (var i = input.length - 1; i >= 0; i--) {
+
+        var randomIndex = Math.floor(Math.random() * (i + 1));
+        var itemAtIndex = input[randomIndex];
+
+        input[randomIndex] = input[i];
+        input[i] = itemAtIndex;
+      }
+      return input;
+    }
+
+    // dummy data to test / for initial load
     var students = ["BROKEN", "IT IS BROKEN"];
-    // Initialize Firebase
-    // Eric's credentials for cold caller
+
+    // Initialize Firebase with Eric's credentials for cold caller
     var config = {
       apiKey: "AIzaSyBmiMtgOTC4sW7WZRj8NQYtwFjv-MnzrtU",
       authDomain: "coldcaller-mw.firebaseapp.com",
@@ -97,84 +117,100 @@
     var database = firebase.database();
 
     // Initial Values
-    var name = "default";
-    var email = "default";
-    var age = -1;
-    var comment = "default";
     var studentArray = ["Eric", "Bob", "Rachel"];
+    var chosenStudent = "INITIAL STUDENT BROKEN";
 
-    // Capture Reset Button Click
+    // event handlers / click listeners
     $("#reset").on("click", function (event) {
       event.preventDefault();
       console.log("Reset clicked!");
-      students = ["Kaitlyn	Roecker", "Paula	MacTavish", "Joe	McCreesh", "Anna	Jolly", "Dennis	Bereznyak", "Adeline	Johnson", "Dennis	Ruto", "Marc	Lewin", "Dirk	Wiggins", "Matthew	Jefferis", "Matthew	McCarthy", "Randall	Reitz", "Anthony	Elliott", "Charles	Goodwin", "SARA	BROAD", "Isaac	Lubanko", "Khalil	Owens", "Clay	Fairbanks", "Matthew	Wright", "Kushagra	Bhavsar", "Julian	Skodzinski", "Alexa	Stefanou", "Drita	Dhami", "George	Xia", "Jonathan	Dowd", "Katherine	Wang", "Bernard	Augustin", "Karina	Khachatryan", "Noah	Grubb"];
-      age++;
+      // M/W students
+      students = ["1", "2", "3", "4", "5"];
+
+      students = students.shuffle();
+      // console.log(students);
       // Code for "Setting values in the database"
+      $("#pick-student").removeClass("disabled");
+      $("#pick-student").removeClass("btn-default");
+      $("#pick-student").addClass("btn-primary");
+
+      $("#pick-student").text("Pick a Student");
+
       database.ref().set({
-        name: name,
-        email: email,
-        age: age,
-        comment: comment,
-        studentArray: students
+        studentArray: students,
+        chosenStudent: "(none yet)"
       });
     });
 
-    // Capture Random Button Click
-    $("#add-user").on("click", function (event) {
+    $("#pick-student").on("click", function (event) {
       event.preventDefault();
       console.log("Random clicked!");
-      console.log("Students right now: ");
-      console.log(students);
-      age++; // hacky right now
 
-      // Grabbed values from text-boxes
-      //name = $("#name-input").val().trim();
-      // email = $("#email-input").val().trim();
-      // age = $("#age-input").val().trim();
-      // comment = $("#comment-input").val().trim();
+      if (students.length === 1) {
+        console.log("Picked the last student");
+        $("#pick-student").addClass("disabled");
+        $("#pick-student").addClass("btn-default");
+        $("#pick-student").removeClass("btn-primary");
+
+        $("#pick-student").text("Out of Students!");
+      }
+      if (students.length === 0) {
+        console.log("Already picked all students!");
+        $("#pick-student").addClass("disabled");
+        $("#pick-student").addClass("btn-default");
+        $("#pick-student").removeClass("btn-primary");
+
+        $("#pick-student").text("Out of Students!");
+        // don't hit database if the list is empty
+        return;
+      }
+      chosenStudent = students.pop();
 
       // Code for "Setting values in the database"
       database.ref().set({
-        name: name,
-        email: email,
-        age: age,
-        comment: comment,
-        studentArray: students
+        studentArray: students,
+        chosenStudent: chosenStudent
       });
 
     });
 
-    // Firebase watcher + initial loader HINT: .on("value")
+    // Firebase watcher + initial data loader
     database.ref().on("value", function (snapshot) {
+      students = snapshot.val().studentArray;
+      chosenStudent = snapshot.val().chosenStudent;
 
+      if (students && students.length) {
+        $("#chosen-student").text(snapshot.val().chosenStudent);
+        $("#students-left").text(snapshot.val().studentArray.length);
+      }
+      else {
+        students = []; // had weird issues if sending an empty array to firebase, it wasn't saving it
+        $("#chosen-student").text(snapshot.val().chosenStudent);
+        $("#students-left").text("0");
 
-      // Log everything that's coming out of snapshot
-      console.log(snapshot.val());
-      console.log(snapshot.val().name);
-      console.log(snapshot.val().email);
-      console.log(snapshot.val().age);
-      console.log(snapshot.val().comment);
-      console.log(snapshot.val().students);
+        // repeat the button turn-off for page load
+        $("#pick-student").addClass("disabled");
+        $("#pick-student").addClass("btn-default");
+        $("#pick-student").removeClass("btn-primary");
+      }
 
-      // set students locally
-      students = snapshot.val().studentArray.slice();
+      let sortedStudents = students.slice();
+      sortedStudents.sort();
+      $("#remaining-members").html("");
 
-      var rnd = Math.floor(Math.random() * snapshot.val().studentArray.length);      // returns a number between 0 and last index in array
-      console.log(rnd);
+      // Display remaining students
+      for (let i = 0; i < sortedStudents.length; i++) {
+        var $student = $("<div>");
+        $student.addClass("student-container");
+        $student.text(sortedStudents[i]);
+        $("#remaining-members").append($student);
+      }
 
-
-      // Change the HTML to reflect
-      $("#name-display").text(snapshot.val().name);
-      $("#email-display").text(snapshot.val().email);
-      $("#age-display").text(snapshot.val().age);
-      $("#comment-display").text(snapshot.val().comment);
-      $("#chosen-student").text(snapshot.val().studentArray[rnd]);
-      $("#students-left").text(snapshot.val().studentArray.length);
-
-      // Handle the errors
+      // Handle any errors
     }, function (errorObject) {
       console.log("Errors handled: " + errorObject.code);
     });
+
   </script>
 
 </body>
