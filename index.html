@@ -7,11 +7,11 @@
   <meta charset="UTF-8">
   <title>Cold Caller</title>
 
-  <!-- Bootstrap -->
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
     crossorigin="anonymous">
 
-  <!-- LINK TO FIREBASE -->
+  <!-- Firebase JS -->
   <script src="https://www.gstatic.com/firebasejs/4.11.0/firebase.js"></script>
 
   <style>
@@ -39,11 +39,12 @@
   <div class="container">
 
     <br>
-    <div class="row"> <!-- might be misusing rows and columns, should think about using 3 rows here -->
+    <div class="row">
+      <!-- might be misusing rows and columns, should think about using 3 rows here -->
       <div class="col-lg-6 col-lg-offset-3">
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title text-center">Controls</h3>
+            <h3 class="panel-title text-center">Random Student Picker</h3>
           </div>
           <div class="panel-body text-center">
             <button class="btn btn-primary" id="pick-student" type="submit">Pick a Student</button>
@@ -59,7 +60,7 @@
           <div class="panel-body text-center" id="chosen-panel">
             <h4>Chosen:</h4>
             <span id="chosen-student" class="student-container">___________</span>
-            <h4>Remaining:</h4>
+            <h4>Remaining Students:</h4>
             <span id="students-left">##</span>
           </div>
         </div>
@@ -72,9 +73,16 @@
         </div>
 
 
-      </div><!-- end column -->
+      </div>
+      <!-- end column -->
 
     </div>
+
+    <hr />
+    <p class="text-center">By
+      <a href="https://github.com/eqmvii">Eric Mancini</a> using
+      <a href="firebase.google.com">Firebase</a>
+    </p>
 
   </div>
 
@@ -116,7 +124,6 @@
     // Create a variable to reference the database.
     var database = firebase.database();
 
-    // Initial Values
     var studentArray = ["Eric", "Bob", "Rachel"];
     var chosenStudent = "INITIAL STUDENT BROKEN";
 
@@ -124,12 +131,10 @@
     $("#reset").on("click", function (event) {
       event.preventDefault();
       console.log("Reset clicked!");
-      // M/W students
       students = ["1", "2", "3", "4", "5"];
 
       students = students.shuffle();
-      // console.log(students);
-      // Code for "Setting values in the database"
+
       $("#pick-student").removeClass("disabled");
       $("#pick-student").removeClass("btn-default");
       $("#pick-student").addClass("btn-primary");
@@ -166,7 +171,6 @@
       }
       chosenStudent = students.pop();
 
-      // Code for "Setting values in the database"
       database.ref().set({
         studentArray: students,
         chosenStudent: chosenStudent
