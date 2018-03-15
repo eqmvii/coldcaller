@@ -30,6 +30,11 @@
     button {
       margin: 12px;
     }
+
+    .student-house {
+      /* change this if using a different student list */
+      height: 415px;
+    }
   </style>
 
 </head>
@@ -65,7 +70,7 @@
           </div>
         </div>
 
-        <div class="panel panel-default">
+        <div class="panel panel-default student-house">
           <div class="panel-heading">
             <h3 class="panel-title text-center">Remaining Students</h3>
           </div>
@@ -131,7 +136,8 @@
     $("#reset").on("click", function (event) {
       event.preventDefault();
       console.log("Reset clicked!");
-      students = ["1", "2", "3", "4", "5"];
+      // students = ["1", "2", "3", "4", "5"];
+      students = ["Eric Mancini", "David Martin", "Eric Martin", "John Smith", "Jane Smith", "Sara Martin", "Susan Smith", "Jeremy Robins", "Jessica Rogers", "Brad Nguyen", "Luke Skywalker", "Coolhand Luke", "Porter Robinson", "Loren Ashton", "Joel Zimmerman"]
 
       students = students.shuffle();
 
